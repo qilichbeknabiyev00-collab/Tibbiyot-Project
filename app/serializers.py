@@ -31,3 +31,14 @@ class ObservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Observation
         fields = ('id', 'patient', 'nurse', 'temperature', 'blood_pressure', 'notes', 'created_at')
+
+
+class StatisticsSerializer(serializers.Serializer):
+    total_patients = serializers.IntegerField()
+    total_doctors = serializers.IntegerField()
+    total_records = serializers.IntegerField()
+    total_commands_diagnosed = serializers.CharField()
+
+class TreatmentSuggestionSerializer(serializers.Serializer):
+    diagnosis = serializers.CharField()
+    suggested_treatment = serializers.CharField()
