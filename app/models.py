@@ -20,15 +20,24 @@ class PatientProfile(models.Model):
         return self.user.username
 
 class MedicalRecord(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='records')
-    doctor = models.ForeignKey(PatientProfile, on_delete=models.SET_NULL, blank=True, null=True)
-    diagnosis = models.CharField(max_length=100)
-    treatment_plan = models.CharField(max_length=100)
+    patient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="patient_records",
+        null = True,
+    )
+    doctor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="doctor_records"
+    )
+    diagnosis = models.TextField()
+    treatment_plan = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    # agar update tracking kerak bo‘lsa:
     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.user.username
 
 class Medication(models.Model):
     record = models.ForeignKey(MedicalRecord, on_delete=models.CASCADE, related_name='medications')

@@ -1,17 +1,15 @@
 from django.shortcuts import render
-from rest_framework import viewsets,status
+from requests import delete
+from rest_framework import status,generics
 from rest_framework.response import Response
-from .utils import suggest_treatment
-from collections import Counter
 from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-from .models import MedicalRecord, Observation, PatientProfile, User
-from .serializers import MedicalRecordSerializer, ObservationSerializer,PatientProfileSerializer
-from .permissions import IsDoctor, IsNurse, IsPatient
-# Create your views here.
+from .models import MedicalRecord
+from .serializers import MedicalRecordSerializer
+from .permissions import IsDoctor
 
-class MedicalRecordViewSet(viewsets.ModelViewSet):
+class MedicalRecordListCreateView(generics.ListCreateAPIView):
     queryset = MedicalRecord.objects.all()
     serializer_class = MedicalRecordSerializer
     permission_classes = [IsAuthenticated,IsDoctor]
@@ -19,46 +17,47 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(doctor=self.request.user)
 
-class ObservationViewSet(viewsets.ModelViewSet):
-    queryset = Observation.objects.all()
-    serializer_class = ObservationSerializer
-    permission_classes = [IsAuthenticated,IsNurse]
 
-    def perform_create(self, serializer):
-        serializer.save(nurse=self.request.user)
+class MedicalRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = MedicalRecord.objects.all()
+    serializer_class = MedicalRecordSerializer
+    permission_classes = [IsAuthenticated,IsDoctor]
 
-class PatentProfileViewSet(viewsets.ModelViewSet):
-    queryset = Observation.objects.all()
-    serializer_class = PatientProfileSerializer
-    permission_classes = [IsAuthenticated, IsPatient]
+    def perform_update(self, serializer):
+        serializer.save(doctor=self.request.user)
 
-class StatisticsView(APIView):
-    permission_classes = [IsAuthenticated]
+    def delete(self,request,pk):
+        try:
+            MedicalRecord.objects.get(pk=pk)
+            record = delete()
+            return Response({
+                'Malumotlar o`chirildi':status.HTTP_204_NO_CONTENT,
+            })
+        except MedicalRecord.DoesNotExist:
+            return Response({
+                'error':'Topilamdi'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
-    def get(self,request):
-        total_patients = User.objects.filter(role= 'Patient').count()
-        total_doctors = User.objects.filter(role= 'Doctor').count()
-        total_records = MedicalRecord.objects.count()
+    def put(self, request, pk):
+        try:
+            record = MedicalRecord.objects.get(pk=pk)
+        except MedicalRecord.DoesNotExist:
+            return Response({"error": "Topilmadi"}, status=404)
 
-        diagnoses = MedicalRecord.objects.values_list('diagnosis', flat=True ).distinct()
-        most_comman = Counter(diagnoses).most_comman(1)
-        most_common_diagnosis = most_comman[0][0] if most_comman else "No records"
+        serializer = MedicalRecordSerializer(
+            record,  # instance
+            data=request.data  # MUHIM!!!
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-        data = {
-            "total_patients": total_patients,
-            "total_doctors": total_doctors,
-            "total_records": total_records,
-            "most_common_diagnosis": most_common_diagnosis
-        }
-        return Response(data)
+        return Response({
+            "message": "Ma'lumot yangilandi",
+            "data": serializer.data
+        })
 
-@api_view(['Post'])
-def treatment_suggestion(request):
-    diagnosis = request.data['diagnosis']
-    if not diagnosis:
-        return Response({"error":"Diagnosis is required"}), status.HTTP_400_BAD_REQUEST
-    suggestion = suggest_treatment(diagnosis)
-    return Response({
-        "diagnosis": diagnosis,
-        "suggested_treatment": suggestion
-    })
+
+
+
+

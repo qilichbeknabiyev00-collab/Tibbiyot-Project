@@ -18,11 +18,10 @@ class MedicationSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'dosage', 'notes')
 
 class MedicalRecordSerializer(serializers.ModelSerializer):
-    medications = MedicationSerializer(many=True, read_only=True)
-    doctor = UserSerializer(read_only=True)
     class Meta:
         model = MedicalRecord
-        fields = ('id', 'doctor', 'diagnosis', 'treatment_plan', 'created_at', 'updated_at', 'medications')
+        fields = ['id', 'patient', 'doctor', 'diagnosis', 'treatment_plan', 'created_at', 'updated_at']
+        read_only_fields = ['doctor', 'created_at', 'updated_at']
 
 
 class ObservationSerializer(serializers.ModelSerializer):
