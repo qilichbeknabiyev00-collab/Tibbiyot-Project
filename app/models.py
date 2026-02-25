@@ -8,9 +8,16 @@ class User(AbstractUser):
         ('Patient', 'Patient'),
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Doctor')
+    assigned_doctor = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        limit_choices_to={"role": "Doctor"},
+        related_name="patients"
+    )
 
 class PatientProfile(models.Model):
-    id = models.AutoField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     birth_date = models.DateField()
     phone_number = models.CharField(max_length=20)
@@ -23,8 +30,7 @@ class MedicalRecord(models.Model):
     patient = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="patient_records",
-        null = True,
+        related_name="medical_records"
     )
     doctor = models.ForeignKey(
         User,
@@ -35,20 +41,53 @@ class MedicalRecord(models.Model):
     diagnosis = models.TextField()
     treatment_plan = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    # agar update tracking kerak bo‘lsa:
+    updated_at = models.DateTimeField(auto_now=True)
+
+class Message(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_messages")
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name="received_messages")
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+class Medication(models.Model):
+    patient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="patient_medications"
+    )
+    doctor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="doctor_medications"
+    )
+    nurse = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="nurse_medications"
+    )
+    name = models.CharField(max_length=100)
+    dosage = models.TextField(max_length=100)
+    given_at = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
 
-class Medication(models.Model):
-    record = models.ForeignKey(MedicalRecord, on_delete=models.CASCADE, related_name='medications')
-    name = models.CharField(max_length=100)
-    dosage = models.CharField(max_length=100)
-    notes = models.TextField()
-
 class Observation(models.Model):
-    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name='patient_observations')
-    nurse = models.ForeignKey(PatientProfile, on_delete=models.CASCADE ,related_name='nurse_observations')
+    patient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='patient_observations'
+    )
+    nurse = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='nurse_observations'
+    )
     temperature = models.FloatField()
     blood_pressure = models.CharField(max_length=100)
     notes = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+
