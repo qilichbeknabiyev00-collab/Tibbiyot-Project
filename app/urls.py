@@ -5,9 +5,9 @@ from .views import (
     MedicalRecordListCreateView,
     MedicalRecordDetailView,
     PatientListView,
-    MedicationListCreateView,
+    MedicationCreateView,
     MedicationDetailView,
-    ObservationListCreateView,
+    # ObservationListCreateView,
     ObservationDetailView,
     PatientProfileView,
     PatientMedicalRecordListView,
@@ -27,19 +27,19 @@ urlpatterns = [
     path('medical-records/<int:pk>/',MedicalRecordDetailView.as_view(), name='medical_record_list'),
 
     #Nurse model uchun
-    path('medications/',MedicationListCreateView.as_view(), name='medication_list'),
-    path('medications/<int:pk>', MedicationDetailView.as_view(), name='medication_list'),
+    path('medications/',MedicationCreateView.as_view(), name='medication_list'),
+    path('medications/<int:pk>/', MedicationDetailView.as_view(), name='medication_edit'),
 
-    path('observations/',ObservationListCreateView.as_view(), name='observation_list'),
+    # path('observations/',ObservationListCreateView.as_view(), name='observation_list'),
     path('observations/<int:pk>', ObservationDetailView.as_view(), name='observation_list'),
 
     #patient uchun
-    path('patients/',PatientListView.as_view(), name='patient_list'),
-    path('patients/records',PatientMedicalRecordListView.as_view(), name='medical_record_list'),
-    path('patients/message',PatientMessageCreateView.as_view(), name='message_create'),
-    path('patients/message', PatientMessageListView.as_view(), name='message_list'),
-    path('doctor/message', DoctorMessageListView.as_view(), name='message_list'),
-    path('doctor/replay', DoctorReplyMessageView.as_view(), name='message_list'),
+    path('patients/list/',PatientListView.as_view(), name='patient_list'),
+    path('patients/records/',PatientMedicalRecordListView.as_view(), name='medical_record_list'),
+    path('patients/message/',PatientMessageCreateView.as_view(), name='message_create'),
+    path('patients/message/', PatientMessageListView.as_view(), name='message_list'),
+    path('doctor/message/', DoctorMessageListView.as_view(), name='message_list'),
+    path('doctor/replay/', DoctorReplyMessageView.as_view(), name='message_list'),
 
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

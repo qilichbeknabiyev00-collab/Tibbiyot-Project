@@ -1,5 +1,7 @@
 from django.shortcuts import render
-from requests import delete
+from django.db.models import Q
+from rest_framework.generics import GenericAPIView
+from django.shortcuts import get_object_or_404
 from rest_framework import status,generics
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -7,23 +9,31 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .serializers import MessageSerializer, PatientProfileSerializer, MessageForPatientSerializer, \
-    RegistrationSerializer
-from .models import Message
 
-
-from .models import MedicalRecord,User
-from .serializers import MedicalRecordSerializer, UserSerializer
+from .serializers import (
+    MessageSerializer,
+    PatientProfileSerializer,
+    MessageForPatientSerializer,
+    RegistrationSerializer,
+    MedicationSerializer,
+    ObservationSerializer,
+    PatientSerializer,
+    MedicalRecordSerializer
+)
+from .models import MedicalRecord,User,Message
 from .permissions import IsDoctor, IsNurse, IsPatient
 
 
 class PatientProfileView(generics.RetrieveAPIView):
     serializer_class = PatientProfileSerializer
-    permission_classes = [IsAuthenticated, IsPatient]
+    permission_classes = [IsAuthenticated,IsPatient]
 
 
     def get_object(self):
+        # Foydalanuvchi o‘z profilini oladi
         return self.request.user
+
+
 
 class MedicalRecordListCreateView(generics.ListCreateAPIView):
     queryset = MedicalRecord.objects.all()
@@ -34,80 +44,42 @@ class MedicalRecordListCreateView(generics.ListCreateAPIView):
         serializer.save(doctor=self.request.user)
 
 
-class MedicalRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
+class MedicalRecordDetailView(GenericAPIView):
     queryset = MedicalRecord.objects.all()
     serializer_class = MedicalRecordSerializer
-    permission_classes = [IsAuthenticated,IsDoctor]
 
-    def perform_update(self, serializer):
-        serializer.save(doctor=self.request.user)
-
-    def delete(self,request,pk):
-        try:
-            MedicalRecord.objects.get(pk=pk)
-            record = delete()
-            return Response({
-                'Malumotlar o`chirildi':status.HTTP_204_NO_CONTENT,
-            })
-        except MedicalRecord.DoesNotExist:
-            return Response({
-                'error':'Topilamdi'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-    def put(self, request, pk):
-        try:
-            record = MedicalRecord.objects.get(pk=pk)
-        except MedicalRecord.DoesNotExist:
-            return Response({"error": "Topilmadi"}, status=404)
+    # UPDATE
+    def put(self, request, *args, **kwargs):
+        record = get_object_or_404(MedicalRecord, pk=kwargs["pk"])
 
         serializer = MedicalRecordSerializer(
-            record,  # instance
-            data=request.data  # MUHIM!!!
+            record,
+            data=request.data,
+            partial=True
         )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "Ma'lumot yangilandi",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # DELETE
+    def delete(self, request, *args, **kwargs):
+        record = get_object_or_404(MedicalRecord, pk=kwargs["pk"])
+        record.delete()
 
         return Response({
-            "message": "Ma'lumot yangilandi",
-            "data": serializer.data
-        })
-
-
-class PatientListView(generics.ListAPIView):
-    queryset = User.objects.filter(role="patient")
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated, IsNurse, IsDoctor]
-
-class MedicationListCreateView(generics.ListCreateAPIView):
-    queryset = MedicalRecord.objects.all()
-    serializer_class = MedicalRecordSerializer
-    permission_classes = [IsAuthenticated,IsNurse]
-
-    def perform_create(self, serializer):
-        serializer.save(nurse=self.request.user)
-
-
-class MedicationDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = MedicalRecord.objects.all()
-    serializer_class = MedicalRecordSerializer
-    permission_classes = [IsAuthenticated,IsNurse]
-
-
-class ObservationListCreateView(generics.ListCreateAPIView):
-    queryset = MedicalRecord.objects.all()
-    serializer_class = MedicalRecordSerializer
-    permission_classes = [IsAuthenticated,IsNurse]
-
-    def perform_create(self, serializer):
-        serializer.save(nurse=self.request.user)
-
+            "message": "Ma'lumot o‘chirildi"
+        }, status=status.HTTP_200_OK)
 
 class ObservationDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MedicalRecord.objects.all()
     serializer_class = MedicalRecordSerializer
     permission_classes = [IsAuthenticated,IsNurse]
-
 
 class PatientMedicalRecordListView(generics.ListAPIView):
     queryset = MedicalRecord.objects.all()
@@ -150,13 +122,9 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegistrationSerializer
     permission_classes = [AllowAny]
 
-
-from django.db.models import Q
-from django.shortcuts import get_object_or_404
-
 class DoctorMessageListView(generics.ListAPIView):
     serializer_class = MessageSerializer
-    permission_classes = [IsAuthenticated,IsDoctor]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Message.objects.filter(receiver=self.request.user)
@@ -173,7 +141,7 @@ class MessageListView(generics.ListAPIView):
 
 class DoctorReplyMessageView(generics.CreateAPIView):
     serializer_class = MessageSerializer
-    permission_classes = [IsAuthenticated, IsDoctor]
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         patient_id = self.request.data.get("patient_id")
@@ -183,3 +151,24 @@ class DoctorReplyMessageView(generics.CreateAPIView):
             sender=self.request.user,
             receiver_id=patient_id
         )
+
+class PatientListView(generics.ListAPIView):
+    queryset = User.objects.filter(role='Patient')
+    serializer_class = PatientSerializer
+    Permission_classes = [IsAuthenticated,IsNurse]
+
+class MedicationCreateView(generics.CreateAPIView):
+    serializer_class = MedicationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(nurse=self.request.user)
+
+class MedicationDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = MedicalRecord.objects.all()
+    serializer_class = MedicalRecordSerializer
+    permission_classes = [IsAuthenticated]
+
+class ObservationCreateView(generics.CreateAPIView):
+    serializer_class = ObservationSerializer
+    permission_classes = [IsAuthenticated,IsNurse]

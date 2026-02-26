@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, PatientProfile, MedicalRecord, Medication, Observation, Message
+from .models import User, MedicalRecord, Medication, Observation, Message
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,11 +13,12 @@ class MedicationSerializer(serializers.ModelSerializer):
         read_only_fields = ["nurse", "given_at"]
 
 class MedicalRecordSerializer(serializers.ModelSerializer):
+    doctor_name = serializers.CharField(source="doctor.username", read_only=True)
+    role = serializers.CharField(source="role.name", read_only=True)
     class Meta:
         model = MedicalRecord
-        fields = ['id', 'patient', 'doctor', 'diagnosis', 'treatment_plan', 'created_at', 'updated_at']
-        read_only_fields = ['doctor', 'created_at', 'updated_at']
-
+        fields = ['id', 'patient', 'doctor','doctor_name' ,'role','diagnosis', 'treatment_plan', 'created_at', 'updated_at']
+        read_only_fields = ['doctor','role', 'created_at', 'updated_at']
 
 class ObservationSerializer(serializers.ModelSerializer):
     medications = MedicalRecordSerializer(many=True, read_only=True)
@@ -48,16 +49,15 @@ class DoctorSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "role"]
 
-# Patient xabarlarini ko‘rsatish
 class MessageForPatientSerializer(serializers.ModelSerializer):
-    sender = DoctorSerializer(read_only=True)
-    receiver = DoctorSerializer(read_only=True)
+    sender = serializers.StringRelatedField()
+    receiver = serializers.StringRelatedField()
 
     class Meta:
         model = Message
-        fields = ["id", "sender", "receiver", "text", "created_at"]
-
+        fields = ['id', 'text', 'created_at', 'sender', 'receiver']
 # Patient medical recordlarini ko‘rsatish
+
 class MedicalRecordForPatientSerializer(serializers.ModelSerializer):
     doctor = DoctorSerializer(read_only=True)
 
@@ -102,3 +102,10 @@ class RegistrationSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+
+class PatientSerializer(serializers.ModelSerializer):
+    medical_records = MedicalRecordSerializer(many=True, read_only=True)
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email','role','medical_records']
