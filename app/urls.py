@@ -15,7 +15,8 @@ from .views import (
     PatientMessageListView,
     RegisterView,
     DoctorMessageListView,
-    DoctorReplyMessageView
+    DoctorReplyMessageView,
+    PrescriptionCreateView
 
 )
 
@@ -29,6 +30,7 @@ urlpatterns = [
     #Nurse model uchun
     path('medications/',MedicationCreateView.as_view(), name='medication_list'),
     path('medications/<int:pk>/', MedicationDetailView.as_view(), name='medication_edit'),
+    path('prescriptions/create/', PrescriptionCreateView.as_view(), name='prescription_create'),
 
     # path('observations/',ObservationListCreateView.as_view(), name='observation_list'),
     path('observations/<int:pk>', ObservationDetailView.as_view(), name='observation_list'),

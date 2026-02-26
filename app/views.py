@@ -1,15 +1,16 @@
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework.permissions import IsAuthenticated
+from .permissions import IsDoctor, IsNurse, IsPatient
+from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import AllowAny
+from django.shortcuts import get_object_or_404
+from .models import MedicalRecord,User,Message
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status,generics
+from rest_framework.views import APIView
 from django.shortcuts import render
 from django.db.models import Q
-from rest_framework.generics import GenericAPIView
-from django.shortcuts import get_object_or_404
-from rest_framework import status,generics
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
 from .serializers import (
     MessageSerializer,
     PatientProfileSerializer,
@@ -18,11 +19,8 @@ from .serializers import (
     MedicationSerializer,
     ObservationSerializer,
     PatientSerializer,
-    MedicalRecordSerializer
+    MedicalRecordSerializer, PrescriptionSerializer
 )
-from .models import MedicalRecord,User,Message
-from .permissions import IsDoctor, IsNurse, IsPatient
-
 
 class PatientProfileView(generics.RetrieveAPIView):
     serializer_class = PatientProfileSerializer
@@ -33,8 +31,6 @@ class PatientProfileView(generics.RetrieveAPIView):
         # Foydalanuvchi o‘z profilini oladi
         return self.request.user
 
-
-
 class MedicalRecordListCreateView(generics.ListCreateAPIView):
     queryset = MedicalRecord.objects.all()
     serializer_class = MedicalRecordSerializer
@@ -43,6 +39,12 @@ class MedicalRecordListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(doctor=self.request.user)
 
+class PrescriptionCreateView(generics.CreateAPIView):
+    serializer_class = PrescriptionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(nurse=self.request.user)
 
 class MedicalRecordDetailView(GenericAPIView):
     queryset = MedicalRecord.objects.all()
