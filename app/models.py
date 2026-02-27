@@ -43,6 +43,26 @@ class MedicalRecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+class TreatmentProgress(models.Model):
+    medical_record = models.ForeignKey(
+        MedicalRecord,
+        on_delete=models.CASCADE,
+        related_name="progress_notes"   # qo‘shing
+    )
+    nurse = models.ForeignKey(User, on_delete=models.CASCADE)
+    note = models.TextField()
+    status = models.TextField(
+        max_length=100,
+        choices = [
+            ('stable', 'Stable'),
+            ('improving', 'Improving'),
+            ('critical', 'Critical'),
+            ('recovered', 'Recovered'),
+        ]
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
 class Prescription(models.Model):
     medical_record = models.ForeignKey(MedicalRecord, on_delete=models.CASCADE,related_name='prescriptions')
     nurse = models.ForeignKey(User, on_delete=models.CASCADE,related_name='nurse_prescriptions')

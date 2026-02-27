@@ -7,7 +7,8 @@ from .models import (
     Medication,
     Observation,
     Message,
-    Prescription
+    Prescription,
+    TreatmentProgress
 )
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,14 +36,39 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id','created_at']
 
+class TreatmentProgressSerializer(serializers.ModelSerializer):
+    nurse_name = serializers.CharField(source="nurse.username", read_only=True)
+    class Meta:
+        model = TreatmentProgress
+        fields = [
+            "id",
+            "medical_record",
+            "nurse",
+            "nurse_name",
+            "note",
+            "created_at"
+        ]
+
 class MedicalRecordSerializer(serializers.ModelSerializer):
     doctor_name = serializers.CharField(source="doctor.username", read_only=True)
-    role = serializers.CharField(source="role.name", read_only=True)
-    prescriptions = PrescriptionSerializer(many = True, read_only=True)
+    prescriptions = PrescriptionSerializer(many=True, read_only=True)
+    progress_notes = TreatmentProgressSerializer(many=True, read_only=True)
+
     class Meta:
         model = MedicalRecord
-        fields = ['id', 'patient', 'doctor','doctor_name' ,'role','diagnosis', 'treatment_plan', 'prescriptions','created_at', 'updated_at']
-        read_only_fields = ['doctor','role', 'prescriptions','created_at', 'updated_at']
+        fields = [
+            'id',
+            'patient',
+            'doctor',
+            'doctor_name',
+            'diagnosis',
+            'treatment_plan',
+            'prescriptions',
+            'progress_notes',   # MUHIM
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['doctor','role', 'created_at', 'updated_at']
 
 class ObservationSerializer(serializers.ModelSerializer):
     medications = MedicalRecordSerializer(many=True, read_only=True)

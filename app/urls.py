@@ -16,7 +16,8 @@ from .views import (
     RegisterView,
     DoctorMessageListView,
     DoctorReplyMessageView,
-    PrescriptionCreateView
+    PrescriptionCreateView,
+    TreatmentProgressCreateView
 
 )
 
@@ -31,9 +32,7 @@ urlpatterns = [
     path('medications/',MedicationCreateView.as_view(), name='medication_list'),
     path('medications/<int:pk>/', MedicationDetailView.as_view(), name='medication_edit'),
     path('prescriptions/create/', PrescriptionCreateView.as_view(), name='prescription_create'),
-
-    # path('observations/',ObservationListCreateView.as_view(), name='observation_list'),
-    path('observations/<int:pk>', ObservationDetailView.as_view(), name='observation_list'),
+    path('medical-record/<int:medical_record_id>/progress/',TreatmentProgressCreateView.as_view(),name='add_progress'),
 
     #patient uchun
     path('patients/list/',PatientListView.as_view(), name='patient_list'),

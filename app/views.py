@@ -19,7 +19,9 @@ from .serializers import (
     MedicationSerializer,
     ObservationSerializer,
     PatientSerializer,
-    MedicalRecordSerializer, PrescriptionSerializer
+    MedicalRecordSerializer,
+    PrescriptionSerializer,
+    TreatmentProgressSerializer
 )
 
 class PatientProfileView(generics.RetrieveAPIView):
@@ -77,11 +79,6 @@ class MedicalRecordDetailView(GenericAPIView):
         return Response({
             "message": "Ma'lumot o‘chirildi"
         }, status=status.HTTP_200_OK)
-
-class ObservationDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = MedicalRecord.objects.all()
-    serializer_class = MedicalRecordSerializer
-    permission_classes = [IsAuthenticated,IsNurse]
 
 class PatientMedicalRecordListView(generics.ListAPIView):
     queryset = MedicalRecord.objects.all()
@@ -174,3 +171,16 @@ class MedicationDetailView(generics.RetrieveUpdateDestroyAPIView):
 class ObservationCreateView(generics.CreateAPIView):
     serializer_class = ObservationSerializer
     permission_classes = [IsAuthenticated,IsNurse]
+
+class TreatmentProgressCreateView(generics.CreateAPIView):
+    serializer_class = TreatmentProgressSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        medication_record_id = self.kwargs['medical_record_id']
+        medication_record = MedicalRecord.objects.get(id=medication_record_id)
+
+        serializer.save(
+            nurse=self.request.user,
+            medical_record=medication_record
+        )
