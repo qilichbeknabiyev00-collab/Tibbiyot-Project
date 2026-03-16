@@ -17,7 +17,6 @@ from .serializers import (
     MessageForPatientSerializer,
     RegistrationSerializer,
     MedicationSerializer,
-    ObservationSerializer,
     PatientSerializer,
     MedicalRecordSerializer,
     PrescriptionSerializer,
@@ -167,10 +166,6 @@ class MedicationDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MedicalRecord.objects.all()
     serializer_class = MedicalRecordSerializer
     permission_classes = [IsAuthenticated]
-
-class ObservationCreateView(generics.CreateAPIView):
-    serializer_class = ObservationSerializer
-    permission_classes = [IsAuthenticated,IsNurse]
 
 class TreatmentProgressCreateView(generics.CreateAPIView):
     serializer_class = TreatmentProgressSerializer

@@ -7,8 +7,6 @@ from .views import (
     PatientListView,
     MedicationCreateView,
     MedicationDetailView,
-    # ObservationListCreateView,
-    ObservationDetailView,
     PatientProfileView,
     PatientMedicalRecordListView,
     PatientMessageCreateView,

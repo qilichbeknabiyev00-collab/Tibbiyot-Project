@@ -49,6 +49,8 @@ class TreatmentProgressSerializer(serializers.ModelSerializer):
             "created_at"
         ]
 
+        read_only_fields = ['medical_record', 'nurse', 'created_at']
+
 class MedicalRecordSerializer(serializers.ModelSerializer):
     doctor_name = serializers.CharField(source="doctor.username", read_only=True)
     prescriptions = PrescriptionSerializer(many=True, read_only=True)
