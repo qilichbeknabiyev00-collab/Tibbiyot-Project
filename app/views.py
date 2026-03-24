@@ -2,7 +2,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
 from .permissions import IsDoctor, IsNurse, IsPatient
 from rest_framework.generics import GenericAPIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny,IsAuthenticated
 from django.shortcuts import get_object_or_404
 from .models import MedicalRecord,User,Message
 from rest_framework.decorators import api_view
@@ -179,3 +179,8 @@ class TreatmentProgressCreateView(generics.CreateAPIView):
             nurse=self.request.user,
             medical_record=medication_record
         )
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        return Response({"status": "logout"})
